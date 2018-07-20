@@ -5,7 +5,7 @@ function filterAllowedMembers (members) {
     return members[item]
   })
 
-  return members
+  return Object.keys(members)
 }
 
 module.exports = { filterAllowedMembers }

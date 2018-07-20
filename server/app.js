@@ -1,65 +1,62 @@
 require('dotenv').config()
-const bodyParser = require('body-parser')
-const express = require('express')
-const io = require('socket.io')
-const { db, auth, firestore } = require('./firebase')
+
+const app = require('express')()
+const server = require('http').createServer(app)
+const io = require('socket.io')(server)
+
+
 // DB imports
 const { mongoose } = require('./db/config')
 const { Document, Room, filterAllowedMembers } = require('./models')
+const { db, auth, firestore } = require('./firebase')
 
 // App configurations
 const port = process.env.PORT || process.env.SERVER_PORT
-const app = express()
-
+const bodyParser = require('body-parser')
 app.use(bodyParser.json())
 
-app.get('/hello', function (req, res) {
-  res.json('Oi')
-  // a document instance
-  var book1 = new Document({ creatorID: 'xtcaDddada', createdAt:11505011015, lastUpdate: 154040455 });
 
-  // save model to database
-  book1.save(function (err, book) {
-    if (err) return console.error(err);
-    console.log(book.creatorID + " saved to bookstore collection.");
-  });
-})
-
-
+// API routes
 app.post('/join', function (req, res) {
   let { documentID, userID } = req.body
 
-  Room.findOneAndUpdate({ documentID },{$push: {onlineMembers: userID}}, function (err, document) {
-    if (err) return res.json({ "error": err })
-    
-    if (document) {
-      console.log(`${userID} has joined to server in room ${documentID}`)
-      return res.status(200).json({"success": 'The document has been created!'})
-    } else {
+  db.collection('projects')
+    .doc(documentID)
+    .get()
+    .then(function (doc) {
+      if (!doc.exists) return res.status(404).json({"error": 'document/not-found'})
       
-      db.collection('projects')
-        .doc(documentID)
-        .get()
-        .then(function (doc) {
-          if (!doc.exists) return res.status(404).json({"error": 'document/not-found'})
+      let allowedMembers = filterAllowedMembers(doc.data().members)
+      
+      if (!allowedMembers.includes(userID)) { // If user can't access the document, return "Unauthorized"
+        return res.status(401).json({"error": 'document/permission-denied'})
+      } else {
+        Room.findOneAndUpdate({ documentID },{$set: allowedMembers, $addToSet: {onlineMembers: userID}}, function (err, document) {
+          if (err) return res.json({ "error": err })
           
-          let allowedMembers = filterAllowedMembers(doc.data().members)
-          let onlineMembers = (allowedMembers[userID]) ? [userID] : []
-          
-          if(!allowedMembers[userID]) return res.status(401).json({"error": 'document/permission-denied'})
-
-          let room = new Room({ documentID: doc.id, allowedMembers: Object.keys(allowedMembers), onlineMembers })
-          
-          room.save().then(function (){
-            console.log(`${userID} has joined to server in room ${documentID}`)
-            return res.status(200).json({"success": 'The document has been created!'})
-          })
+          if (document) {
+            printSuccess()
+          } else {
+            let room = new Room({ documentID: doc.id, allowedMembers, onlineMembers: [userID] })
+            room.save().then(() => { printSuccess() })
+          }    
         })
-    }    
-  })
+
+        function printSuccess () {
+          console.log(`${userID} has joined to server in room ${documentID}`)
+          return res.status(200).json({"success": 'You are joined to document'})
+        }
+      }
+    }) 
 })
 
-app.listen(port, () => {
+server.listen(port, () => {
+  restartServer()
   console.log(`Server is running in port ${ port }`)
   console.log(`DB status ${mongoose.connection.readyState}`)
 })
+
+function restartServer () {
+  console.log('Restarting server...')
+  Room.dropOnlineMembers()
+}
