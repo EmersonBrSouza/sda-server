@@ -1,0 +1,26 @@
+{
+  "name": "sda-server",
+  "version": "1.0.0",
+  "description": "A server to SDA project",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/EmersonBrSouza/sda-server.git"
+  },
+  "author": "Emerson Souza",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/EmersonBrSouza/sda-server/issues"
+  },
+  "homepage": "https://github.com/EmersonBrSouza/sda-server#readme",
+  "dependencies": {
+    "body-parser": "^1.18.3",
+    "dotenv": "^6.0.0",
+    "express": "^4.16.3",
+    "mongoose": "^5.2.4",
+    "socket.io": "^2.1.1"
+  }
+}
