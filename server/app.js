@@ -15,7 +15,6 @@ const port = process.env.PORT || process.env.SERVER_PORT
 const bodyParser = require('body-parser')
 app.use(bodyParser.json())
 
-
 // API routes
 app.post('/join', function (req, res) {
   let { documentID, userID } = req.body
@@ -49,6 +48,23 @@ app.post('/join', function (req, res) {
       }
     }) 
 })
+
+io.on('connection', function (socket) {
+  socket.on('pingServer', function (data) {
+    console.log(data)
+  });
+
+  socket.on('commit', function (data) {
+    let response = data.execute.ops;
+    socket.emit('execute', {response})
+  });
+
+  socket.on('pull', function (data) {
+    console.log(data)
+    socket.emit('execute', {test: 'oloco'})
+  });
+});
+
 
 server.listen(port, () => {
   restartServer()
