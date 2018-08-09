@@ -70,12 +70,12 @@ io.on('connection', function (socket) {
   });
 
   socket.on('commit', function (data) {
-    stack.push(data.execute.ops);
-    rooms[data.documentID].sendToOthers(data.content)
+    // stack.push(data.execute.ops);
+    rooms[data.documentID].sendToOthers(data.content, data.userID)
   });
 
   socket.on('pull', function (data) {
-    socket.emit('execute', { stack })
+    // socket.emit('execute', { stack })
   });
 });
 

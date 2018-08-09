@@ -3,11 +3,11 @@ class DocumentRoom {
     this.roomID = roomID;
     this.allowedMembers = allowedMembers;
     this.members = {}
+    this.stack = []
   }
 
   join (userID, socket) {
-    if (!this.allowedMembers.includes(this.allowedMembers)) return false
-
+    if (!this.allowedMembers.includes(userID)) return false
     this.members[userID] = socket;
     return true
   }
@@ -24,10 +24,22 @@ class DocumentRoom {
   }
 
   sendToOthers (data, emitterID) {
+
+    let history = []
+    console.log(this.stack)
+    this.stack.push(data)
+
+    this.stack.forEach(item => {
+      item.ops.forEach(action => {
+        if (action.hasOwnProperty('retain') && action.retain > 1) action.retain = action.retain - 1
+        history.push(action)
+      })
+    })
+    
     Object.keys(this.members).forEach(id => {
       if (id !== emitterID) {
         let socket = this.members[id]
-        socket.emit('pull', data)
+        socket.emit('execute', history)
       }
     })
   }
