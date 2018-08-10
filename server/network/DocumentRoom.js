@@ -26,16 +26,16 @@ class DocumentRoom {
   sendToOthers (data, emitterID) {
 
     let history = []
-    console.log(this.stack)
     this.stack.push(data)
-
+    
     this.stack.forEach(item => {
       item.ops.forEach(action => {
         if (action.hasOwnProperty('retain') && action.retain > 1) action.retain = action.retain - 1
         history.push(action)
       })
     })
-    
+
+    console.log(Object.keys(this.members))
     Object.keys(this.members).forEach(id => {
       if (id !== emitterID) {
         let socket = this.members[id]
